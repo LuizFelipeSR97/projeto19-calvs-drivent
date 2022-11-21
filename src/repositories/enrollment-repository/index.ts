@@ -2,12 +2,13 @@ import { prisma } from "@/config";
 import { Enrollment } from "@prisma/client";
 
 async function findWithAddressByUserId(userId: number) {
-  return prisma.enrollment.findFirst({
+  const enrollment = await prisma.enrollment.findFirst({
     where: { userId },
     include: {
       Address: true,
     },
   });
+  return enrollment;
 }
 
 async function upsert(
