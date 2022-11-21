@@ -52,18 +52,28 @@ export async function getPaymentInfo(req: AuthenticatedRequest, res: Response) {
 }
 
 export async function postPaymentInfo(req: AuthenticatedRequest, res: Response) {
-  return res.send("ok");
-
-  /* const { userId } = req;
+  const { userId } = req;
+  const paymentInfo = req.body;
 
   try {
     const enrollment = await enrollmentsService.getOneWithAddressByUserId(userId);
-    const enrollmentId = enrollment.id
-    const ticket = await ticketsService.getTicketByEnrollmentId(enrollmentId);
-    return res.status(httpStatus.OK).send(ticket);
+    if(!enrollment) return res.sendStatus(httpStatus.NOT_FOUND);
+    const enrollmentId = enrollment.id;
+
+    const userTicket = await ticketsService.getTicketByEnrollmentId(enrollmentId);
+    if (!userTicket) return res.sendStatus(404);
+    const userTicketId = userTicket.id;
+    console.log(enrollmentId, userTicketId);
+    return res.send("ok");
+
+    const ticketTypes = await ticketsService.getTicketTypes();
+    /* const ticketType = ticketTypes.filter(userTicketValue)
+    const userTicketValue = userTicket.;
+    const a = { id: ticketSearched.id, status: ticketSearched.status, ticketTypeId: ticketSearched.ticketTypeId, enrollmentId: ticketSearched.enrollmentId, TicketType: ticketSearched.TicketType, createdAt: ticketSearched.createdAt, updatedAt: ticketSearched.updatedAt };
+    return res.status(httpStatus.OK).send(ticket); */
   } catch (error) {
     if (error.name === "NotFoundError") {
       return res.send(httpStatus.NOT_FOUND);
     }
-  } */
+  }
 }

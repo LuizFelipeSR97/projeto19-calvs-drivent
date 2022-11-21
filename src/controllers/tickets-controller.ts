@@ -21,6 +21,7 @@ export async function getTickets(req: AuthenticatedRequest, res: Response) {
     if(!enrollment) return res.sendStatus(httpStatus.NOT_FOUND);
     const enrollmentId = enrollment.id;
     const ticketSearched = await ticketsService.getTicketByEnrollmentId(enrollmentId);
+    if (!ticketSearched) return res.sendStatus(404);
     const ticket = { id: ticketSearched.id, status: ticketSearched.status, ticketTypeId: ticketSearched.ticketTypeId, enrollmentId: ticketSearched.enrollmentId, TicketType: ticketSearched.TicketType, createdAt: ticketSearched.createdAt, updatedAt: ticketSearched.updatedAt };
     return res.status(httpStatus.OK).send(ticket);
   } catch (error) {
