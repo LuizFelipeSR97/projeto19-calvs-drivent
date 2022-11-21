@@ -4,7 +4,16 @@ import { NETWORK_AUTHENTICATION_REQUIRED } from "http-status";
 
 async function findTicketByEnrollmentId(enrollmentId: number) {
   const ticket = await prisma.ticket.findFirst({
-    where: { enrollmentId: enrollmentId }
+    where: { enrollmentId: enrollmentId },
+    include: { TicketType: true }
+  });
+
+  return ticket;
+}
+
+async function findTicketByTicketId(ticketId: number) {
+  const ticket = await prisma.ticket.findFirst({
+    where: { id: ticketId }
   });
 
   return ticket;
@@ -48,6 +57,9 @@ async function createTicket(
       ticketTypeId,
       enrollmentId,
       status: "RESERVED"
+    },
+    include: {
+      TicketType: true
     }
   });
   return createdTicket;
@@ -66,6 +78,9 @@ async function updateTicket(
       ticketTypeId,
       enrollmentId,
       status: "RESERVED"
+    },
+    include: {
+      TicketType: true
     }
   });
   return updatedTicket;
@@ -73,6 +88,7 @@ async function updateTicket(
 
 const ticketsRepository = {
   findTicketTypes,
+  findTicketByTicketId,
   findTicketByEnrollmentId,
   upsert,
   createTicket,

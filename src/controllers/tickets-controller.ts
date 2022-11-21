@@ -18,8 +18,10 @@ export async function getTickets(req: AuthenticatedRequest, res: Response) {
 
   try {
     const enrollment = await enrollmentsService.getOneWithAddressByUserId(userId);
+    if(!enrollment) return res.sendStatus(httpStatus.NOT_FOUND);
     const enrollmentId = enrollment.id;
-    const ticket = await ticketsService.getTicketByEnrollmentId(enrollmentId);
+    const ticketSearched = await ticketsService.getTicketByEnrollmentId(enrollmentId);
+    const ticket = { id: ticketSearched.id, status: ticketSearched.status, ticketTypeId: ticketSearched.ticketTypeId, enrollmentId: ticketSearched.enrollmentId, TicketType: ticketSearched.TicketType, createdAt: ticketSearched.createdAt, updatedAt: ticketSearched.updatedAt };
     return res.status(httpStatus.OK).send(ticket);
   } catch (error) {
     if (error.name === "NotFoundError") {
@@ -34,26 +36,26 @@ export async function postCreateOrUpdateTickets(req: AuthenticatedRequest, res: 
 
   try {
     const enrollment = await enrollmentsService.getOneWithAddressByUserId(userId);
+    if (!enrollment) return res.sendStatus(httpStatus.NOT_FOUND);
     const enrollmentId = enrollment.id;
     let ticketId: number;
 
-    console.log("teste2");
-
     const ticket = await ticketsService.isThereTicket(enrollmentId);
 
-    if (ticket===null) {
+    if (!ticket) {
       ticketId=null;
+      console.log(ticketId);
+      const createdTicket = await ticketsService.upsertTicket(enrollmentId, ticketId, ticketTypeId);
+      res.status(httpStatus.CREATED).send(createdTicket);
     } else {
       ticketId=ticket.id;
+      console.log(ticketId);
+      const updatedTicket = await ticketsService.upsertTicket(enrollmentId, ticketId, ticketTypeId);
+      res.status(httpStatus.OK).send(updatedTicket);
     }
 
-    console.log(ticketId);
-
-    const createdOrUpdatedTicket = await ticketsService.upsertTicket(enrollmentId, ticketId, ticketTypeId);
-
+    console.log("foi");
     return;
-
-    console.log(createdOrUpdatedTicket);
 
     console.log("teste3");
 

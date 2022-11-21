@@ -19,7 +19,11 @@ async function getTicketTypes() {
 async function getTicketByEnrollmentId(enrollmentId: number) {
   const ticket = await ticketsRepository.findTicketByEnrollmentId(enrollmentId);
 
-  if (!ticket) throw notFoundError();
+  return ticket;
+}
+
+async function getTicketByTicketId(ticketId: number) {
+  const ticket = await ticketsRepository.findTicketByTicketId(ticketId);
 
   return ticket;
 }
@@ -55,7 +59,17 @@ async function upsertTicket(enrollmentId: number, ticketId: number, ticketTypeId
     createdOrUpdatedTicket = await ticketsRepository.updateTicket(ticketTypeId, enrollmentId, ticketId);
   }
 
-  if (!ticketId) throw notFoundError();
+  if (!createdOrUpdatedTicket.id) throw notFoundError();
+
+  createdOrUpdatedTicket = {
+    id: createdOrUpdatedTicket.id,
+    status: createdOrUpdatedTicket.status,
+    ticketTypeId: createdOrUpdatedTicket.ticketTypeId,
+    enrollmentId: createdOrUpdatedTicket.enrollmentId,
+    TicketType: createdOrUpdatedTicket.TicketType,
+    createdAt: createdOrUpdatedTicket.createdAt,
+    updatedAt: createdOrUpdatedTicket.updatedAt
+  };
 
   return createdOrUpdatedTicket;
 }
@@ -63,6 +77,7 @@ async function upsertTicket(enrollmentId: number, ticketId: number, ticketTypeId
 const ticketsService = {
   getTicketTypes,
   getTicketByEnrollmentId,
+  getTicketByTicketId,
   upsertTicketByEnrollmentId,
   upsertTicket,
   isThereTicket

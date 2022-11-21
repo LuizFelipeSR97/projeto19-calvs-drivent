@@ -18,17 +18,23 @@ export async function getPaymentInfo(req: AuthenticatedRequest, res: Response) {
   }
 
   try {
-    const enrollment = await enrollmentsService.getOneWithAddressByUserId(userId);
-    if(!enrollment) {
-      return res.sendStatus(httpStatus.UNAUTHORIZED);
-    }
-    const enrollmentId = enrollment.id;
-
-    const ticket = await ticketsService.isThereTicket(enrollmentId);
-    if(!ticket) {
+    const userEnrollment = await enrollmentsService.getOneWithAddressByUserId(userId);
+    if(!userEnrollment) {
       return res.sendStatus(httpStatus.NOT_FOUND);
     }
-    const ticketIdSearched = ticket.id;
+    const userEnrollmentId = userEnrollment.id;
+
+    const searchedTicket = await ticketsService.getTicketByTicketId(Number(ticketId));
+    if(!searchedTicket) {
+      return res.sendStatus(httpStatus.NOT_FOUND);
+    }
+    const ticketSearchedEnrollmentId = searchedTicket.enrollmentId;
+
+    if (userEnrollmentId!==ticketSearchedEnrollmentId) {
+      return res.sendStatus(httpStatus.UNAUTHORIZED);
+    } 
+
+    const ticketIdSearched = searchedTicket.id;
 
     if (ticketIdSearched!==Number(ticketId)) {
       return res.sendStatus(httpStatus.UNAUTHORIZED);
