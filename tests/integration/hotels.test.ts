@@ -33,7 +33,7 @@ import dayjs from "dayjs";
 import httpStatus, { EXPECTATION_FAILED } from "http-status";
 import * as jwt from "jsonwebtoken";
 import supertest from "supertest";
-import { createEnrollmentWithAddress, createUser, createhAddressWithCEP, createTwoTicketTypes, createTicket, createHotel } from "../factories";
+import { createEnrollmentWithAddress, createUser, createhAddressWithCEP, createTwoTicketTypes, createTicket, createHotel, createHotelsRooms } from "../factories";
 import { cleanDb, generateValidToken } from "../helpers";
 
 beforeAll(async () => {
@@ -41,6 +41,9 @@ beforeAll(async () => {
   await cleanDb();
 });
 
+beforeEach(async () => {
+  await cleanDb();
+});
 //Fazer um beforeEach?
 
 const server = supertest(app);
@@ -274,6 +277,8 @@ describe("GET /hotels/:hotelId", () => {
       await createTwoTicketTypes();
       await createTicket(enrollment.id, 2, "PAID");
       const hotel = await createHotel();
+      const createdHotelId = hotel.id;
+      const rooms = await createHotelsRooms(createdHotelId);
 
       const hotelId = hotel.id;
 

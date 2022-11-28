@@ -7,22 +7,20 @@ async function getHotels(userId: number) {
   const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
 
   if (!enrollment) {
-    throw notFoundError();
+    throw noContentError();
   }
 
   const ticket = await ticketRepository.findTicketByEnrollmentId(enrollment.id);
+  const ticketTypes = await ticketRepository.findTicketTypes();
+  const ticketTypeWithHotel = ticketTypes.filter(type => type.includesHotel);
 
   if (!ticket) {
     throw notFoundError();
-  } else if(ticket.status!=="PAID") {
-    throw badRequestError();
+  } else if(ticket.status!=="PAID" || ticket.ticketTypeId !== ticketTypeWithHotel[0].id) {
+    throw notFoundError();
   }
 
   const hotels = await hotelsRepository.findAllHotelsInfo();
-
-  if(hotels.length===0) {
-    throw notFoundError();
-  }
 
   return hotels;
 }
@@ -31,24 +29,44 @@ async function getRoomsByHotelId(userId: number, hotelId: number) {
   const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
 
   if (!enrollment) {
-    throw notFoundError();
+    throw noContentError();
   }
 
   const ticket = await ticketRepository.findTicketByEnrollmentId(enrollment.id);
+  const ticketTypes = await ticketRepository.findTicketTypes();
+  const ticketTypeWithHotel = ticketTypes.filter(type => type.includesHotel);
 
   if (!ticket) {
     throw notFoundError();
-  } else if(ticket.status!=="PAID") {
-    throw badRequestError();
-  }
-
-  const hotelRooms = await hotelsRepository.findRoomsInHotel(hotelId);
-
-  if(hotelRooms.length===0) {
+  } else if(ticket.status!=="PAID" || ticket.ticketTypeId !== ticketTypeWithHotel[0].id) {
     throw notFoundError();
   }
 
-  return hotelRooms;
+  const hotels = await hotelsRepository.findAllHotelsInfo();
+  if (hotels.length===0) {
+    return hotels;
+  }
+
+  const hotel = hotels.filter(hotel => hotel.id===hotelId);
+  if (hotel.length===0) {
+    throw badRequestError();
+  }
+
+  const hotelInfo = hotel[0];
+
+  const hotelRooms = await hotelsRepository.findRoomsInHotel(hotelId);
+  if (hotelRooms.length===0) {
+    return hotelRooms;
+  }
+
+  return {
+    id: hotelInfo.id,
+    name: hotelInfo.name,
+    image: hotelInfo.image,
+    createdAt: hotelInfo.createdAt,
+    updatedAt: hotelInfo.updatedAt,
+    Rooms: hotelRooms
+  };
 }
 
 const hotelsService = {
