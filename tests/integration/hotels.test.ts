@@ -294,7 +294,7 @@ describe("GET /hotels/:hotelId", () => {
           updatedAt: expect.any(String),
           Rooms: expect.arrayContaining([
             expect.objectContaining({
-              id: expect.any(String),
+              id: expect.any(Number),
               name: expect.any(String),
               capacity: expect.any(Number),
               hotelId: expect.any(Number),
