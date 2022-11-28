@@ -10,7 +10,9 @@ export async function authenticateToken(req: AuthenticatedRequest, res: Response
   if (!authHeader) return generateUnauthorizedResponse(res);
 
   const token = authHeader.split(" ")[1];
-  if (!token) return generateUnauthorizedResponse(res);
+  const preToken = authHeader.split(" ")[0];
+
+  if (!token || preToken!=="Bearer") return generateUnauthorizedResponse(res);
 
   try {
     const { userId } = jwt.verify(token, process.env.JWT_SECRET) as JWTPayload;
@@ -23,7 +25,7 @@ export async function authenticateToken(req: AuthenticatedRequest, res: Response
     if (!session) return generateUnauthorizedResponse(res);
 
     req.userId = userId;
-    //TODO mudar aqui
+    
     return next();
   } catch (err) {
     return generateUnauthorizedResponse(res);
