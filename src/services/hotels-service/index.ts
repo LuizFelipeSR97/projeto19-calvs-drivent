@@ -1,77 +1,43 @@
-import { badRequestError, noContentError, notFoundError, unauthorizedError } from "@/errors";
+import hotelRepository from "@/repositories/hotel-repository";
 import enrollmentRepository from "@/repositories/enrollment-repository";
 import ticketRepository from "@/repositories/ticket-repository";
-import hotelsRepository from "@/repositories/hotels-repository";
+import { notFoundError } from "@/errors";
+import { cannotListHotelsError } from "@/errors/cannot-list-hotels-error";
+
+async function listHotels(userId: number) {
+  //Tem enrollment?
+  const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
+  if (!enrollment) {
+    throw notFoundError();
+  }
+  //Tem ticket pago isOnline false e includesHotel true
+  const ticket = await ticketRepository.findTicketByEnrollmentId(enrollment.id);
+
+  if (!ticket || ticket.status === "RESERVED" || ticket.TicketType.isRemote || !ticket.TicketType.includesHotel) {
+    throw cannotListHotelsError();
+  }
+}
 
 async function getHotels(userId: number) {
-  const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
+  await listHotels(userId);
 
-  if (!enrollment) {
-    throw noContentError();
-  }
-
-  const ticket = await ticketRepository.findTicketByEnrollmentId(enrollment.id);
-  const ticketTypes = await ticketRepository.findTicketTypes();
-  const ticketTypeWithHotel = ticketTypes.filter(type => type.includesHotel);
-
-  if (!ticket) {
-    throw notFoundError();
-  } else if(ticket.status!=="PAID" || ticket.ticketTypeId !== ticketTypeWithHotel[0].id) {
-    throw notFoundError();
-  }
-
-  const hotels = await hotelsRepository.findAllHotelsInfo();
-
+  const hotels = await hotelRepository.findHotels();
   return hotels;
 }
 
-async function getRoomsByHotelId(userId: number, hotelId: number) {
-  const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
+async function getHotelsWithRooms(userId: number, hotelId: number) {
+  await listHotels(userId);
+  const hotel = await hotelRepository.findRoomsByHotelId(hotelId);
 
-  if (!enrollment) {
-    throw noContentError();
-  }
-
-  const ticket = await ticketRepository.findTicketByEnrollmentId(enrollment.id);
-  const ticketTypes = await ticketRepository.findTicketTypes();
-  const ticketTypeWithHotel = ticketTypes.filter(type => type.includesHotel);
-
-  if (!ticket) {
-    throw notFoundError();
-  } else if(ticket.status!=="PAID" || ticket.ticketTypeId !== ticketTypeWithHotel[0].id) {
+  if (!hotel) {
     throw notFoundError();
   }
-
-  const hotels = await hotelsRepository.findAllHotelsInfo();
-  if (hotels.length===0) {
-    return hotels;
-  }
-
-  const hotel = hotels.filter(hotel => hotel.id===hotelId);
-  if (hotel.length===0) {
-    throw badRequestError();
-  }
-
-  const hotelInfo = hotel[0];
-
-  const hotelRooms = await hotelsRepository.findRoomsInHotel(hotelId);
-  if (hotelRooms.length===0) {
-    return hotelRooms;
-  }
-
-  return {
-    id: hotelInfo.id,
-    name: hotelInfo.name,
-    image: hotelInfo.image,
-    createdAt: hotelInfo.createdAt,
-    updatedAt: hotelInfo.updatedAt,
-    Rooms: hotelRooms
-  };
+  return hotel;
 }
 
-const hotelsService = {
+const hotelService = {
   getHotels,
-  getRoomsByHotelId,
+  getHotelsWithRooms,
 };
 
-export default hotelsService;
+export default hotelService;
